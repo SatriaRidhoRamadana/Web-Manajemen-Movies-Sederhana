@@ -6,51 +6,67 @@ Dokumentasi endpoint API untuk Movies yang dapat digunakan untuk testing di Post
 ```
 http://localhost:8074/API/API/index.php
 ```
+## Gambaran Proyek: MVC, Struktur Folder yang Rapi
 
-## Gambaran Proyek: MVC dan Struktur Folder
+Proyek API ini mengikuti pola arsitektur Model-View-Controller (MVC) dari CodeIgniter. Secara ringkas, controller bertugas menerima HTTP request, melakukan validasi, mengkoordinasikan pemanggilan model dan memilih format response; model bertanggung jawab pada semua operasi data dan query ke database; sedangkan view hanya digunakan untuk antarmuka web (UI) ketika pengguna mengelola film lewat browser. Pada API JSON ini, controller mengembalikan response dalam format JSON — view tidak digunakan untuk endpoint API, tetapi tetap ada untuk halaman manajemen `Movies` yang menggunakan session-based auth.
 
-Proyek API ini dibangun menggunakan pola arsitektur Model-View-Controller (MVC) standar CodeIgniter:
+Agar mudah dinavigasi dan dikembangkan, struktur folder utama disusun rapi sebagai berikut (path relatif terhadap root proyek):
 
-- **Model**: menangani akses dan logika data (mis. `application/models/Movie_model.php`, `User_model.php`, `Token_model.php`). Semua query ke database berada di layer ini.
-- **View**: berisi tampilan web (HTML) yang dipakai oleh controller `Movies.php` untuk interface manajemen. Endpoint API sendiri mengembalikan JSON, bukan view.
-- **Controller**: menerima HTTP request, melakukan validasi, memanggil model, dan mengembalikan response JSON. Contoh controller API adalah `application/controllers/Api.php` (menangani route `api/movies`) dan `application/controllers/Auth.php` (login, logout, refresh token).
+- `application/controllers/` — controller API dan web.
+  - `Api.php`  : controller utama untuk route `api/*` (berisi metode CRUD movies dan users API).
+  - `Auth.php` : endpoint login/logout/refresh token.
+  - `Movies.php`: controller web untuk manajemen film (form upload poster, listing, dsb.).
 
-Struktur folder utama (ringkas):
+- `application/models/` — model data dan abstraksi database.
+  - `Movie_model.php`  : query CRUD untuk tabel `movies`.
+  - `User_model.php`   : query user, verifikasi credential, dan pembacaan data user.
+  - `Token_model.php`  : manajemen revocation (tabel `revoked_tokens`).
 
-- `application/controllers/`  — controller untuk API dan web (mis. `Api.php`, `Movies.php`, `Auth.php`).
-- `application/models/`       — model untuk entitas (mis. `Movie_model.php`, `User_model.php`, `Token_model.php`).
-- `application/views/`        — view untuk tampilan web (form, daftar movie, dll.).
-- `application/config/`       — konfigurasi aplikasi (termasuk `config.php` yang menyimpan `jwt_key`).
-- `application/helpers/`      — helper, termasuk `jwt_helper.php` (fungsi sederhana untuk encode/decode JWT).
-- `system/`                  — core CodeIgniter.
+- `application/views/` — file view untuk UI web (form, halaman daftar). API tidak menggunakan file ini untuk response JSON.
 
-Memahami pemisahan ini penting saat menambah fitur atau memperbaiki bug: perubahan business logic → model; routing/flow → controller; tampilan → view.
+- `application/config/` — konfigurasi aplikasi.
+  - `config.php` : menyimpan konfigurasi umum termasuk `jwt_key` (secret). Pastikan `jwt_key` aman dan tidak di-commit ke repo publik.
 
-## Autentikasi & Header Keamanan (JWT)
+- `application/helpers/` — helper utilities.
+  - `jwt_helper.php` : helper minimal untuk encode/decode JWT (direkomendasikan diganti `firebase/php-jwt` di produksi).
 
-API ini menggunakan JSON Web Token (JWT) bertanda tangan HS256 untuk autentikasi stateless. Ringkasan penggunaannya:
+- `system/` — core CodeIgniter (jangan ubah kecuali perlu patch framework).
 
-- Saat login (`POST /auth/login`) server mengembalikan JWT yang berisi klaim utama seperti `sub` (user id), `name`, `email`, `iat`, `exp`, dan `jti`.
-- Semua request ke endpoint API harus menyertakan token di header `Authorization` dengan format berikut:
+Memisahkan file seperti di atas membantu ketika menambah fitur baru: logic bisnis dan query tetap berada di model, sedangkan controller fokus pada validasi dan routing.
 
-```
-Authorization: Bearer <JWT>
-```
+## Autentikasi & Header Keamanan (JWT) — Penjelasan Lengkap
 
-- Contoh alur singkat dari client (PowerShell/curl.exe):
+API ini menggunakan JSON Web Token (JWT) dengan algoritma HS256 (HMAC-SHA256) untuk autentikasi stateless. Proses utamanya adalah sebagai berikut:
 
-```powershell
-# 1) Login (dapatkan token)
-curl.exe -i -X POST "http://localhost:8074/API/API/index.php/auth/login" -H "Content-Type: application/json" -d '{"username":"admin","password":"admin123"}'
+- Pembuatan token (encode):
+  1. Client mengirim permintaan login ke `POST /auth/login` beserta credential (username/email dan password).
+  2. Server memverifikasi credential melalui `User_model` (mis. `password_verify` terhadap hash di DB). Jika valid, server menyiapkan payload token yang umum berisi klaim seperti `sub` (subject — user id), `name`, `email`, `iat` (issued at), `exp` (expiry timestamp), dan `jti` (unique token id untuk revoke).
+  3. Header JWT dibuat (biasanya `{"alg":"HS256","typ":"JWT"}`), payload di-serialize, lalu header dan payload di-encode menggunakan Base64URL.
+  4. Server menghitung signature: HMAC-SHA256(secret, base64url(header) + '.' + base64url(payload)). Secret diambil dari `application/config/config.php` (`$config['jwt_key']`).
+  5. Token final adalah tiga bagian yang digabung: `base64url(header).base64url(payload).base64url(signature)`. Token ini dikembalikan ke client sebagai bagian dari JSON response, serta disertakan pada header respon `X-Auth-Token` untuk debugging dan (sebelumnya) sebagai HttpOnly cookie untuk UI; catatan: cookie-fallback untuk API dinonaktifkan demi keamanan.
 
-# 2) Gunakan token pada header Authorization untuk panggil API
-curl.exe -i -H "Authorization: Bearer <TOKEN>" "http://localhost:8074/API/API/index.php/api/movies"
-```
+- Validasi token (decode & verifikasi):
+  1. Untuk setiap request API, aplikasi mengekstrak token dari header `Authorization: Bearer <token>` (prioritas utama). Jika header tidak tersedia, server juga diperiksa pada header `X-Auth-Token` atau query param hanya untuk debugging — production harus mengirimkan header `Authorization`.
+  2. Token di-split menjadi tiga bagian, header dan payload di-base64url-decode untuk membaca klaim. Signature diperiksa ulang: server menghitung HMAC-SHA256 dengan secret yang sama dan membandingkannya dengan bagian signature dari token. Jika signature berbeda, token ditolak.
+  3. Server memeriksa klaim `exp` untuk memastikan token belum kedaluwarsa. Jika `exp` lewat, token ditolak.
+  4. Server memeriksa `jti` terhadap tabel `revoked_tokens` melalui `Token_model::is_revoked($jti)`; jika ditemukan, token dianggap tidak berlaku.
+  5. Jika semua pemeriksaan lolos, controller memuat data user (mis. `User_model::get_user($payload['sub'])`) dan mengizinkan akses sesuai peran/flag (`is_admin` untuk operasi manajemen).
 
-- Catatan teknis penting:
-  - Pada beberapa konfigurasi Apache/PHP, header `Authorization` dapat dihilangkan oleh server. Proyek ini sudah menambahkan aturan `.htaccess` untuk meneruskan header Authorization ke PHP; jika token tidak diterima oleh aplikasi, periksa konfigurasi server/`.htaccess`.
-  - API hanya menerima token lewat header (`Authorization`) di jalur produksi. Untuk tujuan debugging, server juga menerima header `X-Auth-Token` atau query param token, tetapi cookie-fallback telah dinonaktifkan untuk API karena alasan keamanan.
-  - Token dapat dicabut (revoked) dan mekanisme revocation disimpan pada tabel `revoked_tokens` melalui `Token_model`.
+### Mengapa header `Authorization` penting dan penanganannya
+Header `Authorization` dengan skema `Bearer` adalah cara standar dan aman untuk mengirim token karena:
+
+- Tidak terlihat di URL (tidak tercatat di log server atau riwayat browser), berbeda dengan query param.
+- Mudah diwariskan ke library HTTP dan middleware.
+
+Namun, beberapa server Apache + PHP menghapus header ini sebelum mencapai aplikasi PHP. Untuk mengatasi, proyek ini menyertakan aturan `.htaccess` yang mem-forward header `Authorization` ke variabel server (`HTTP_AUTHORIZATION`) sehingga helper/Controller tetap dapat membacanya. Selain itu:
+
+- Cookie HttpOnly pernah digunakan untuk UI, namun cookie-fallback untuk API telah dinonaktifkan agar API hanya menerima token eksplisit lewat header.
+- Untuk debugging, tersedia opsi menggunakan header `X-Auth-Token` atau query param, tetapi ini hanya untuk development — jangan gunakan query param di production.
+
+### Keamanan tambahan yang diterapkan
+- Token memiliki `jti` sehingga dapat dicabut (revoked) tanpa mengubah secret atau mengelola session server-side.
+- Server menyimpan `revoked_tokens` dan memeriksa `jti` pada setiap permintaan masuk.
+- Rekomendasi: gunakan HTTPS secara wajib di production, simpan `jwt_key` dengan aman (environment variable / secrets manager), dan gunakan library JWT resmi (mis. `firebase/php-jwt`) untuk menangani edge-case dan patch keamanan.
 
 ## Kebijakan Akses (ringkas)
 - Semua endpoint API (`/api/*`) mengharuskan autentikasi JWT.
