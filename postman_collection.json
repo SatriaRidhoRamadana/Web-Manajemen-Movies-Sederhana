@@ -1,0 +1,443 @@
+{
+  "info": {
+    "name": "Movie Ticket Booking API",
+    "description": "API untuk sistem booking tiket film menggunakan CodeIgniter 3",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Movies",
+      "item": [
+        {
+          "name": "Get All Movies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/movies",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "movies"]
+            }
+          }
+        },
+        {
+          "name": "Get Movie by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/movies/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "movies", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Movie",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Spider-Man: No Way Home\",\n  \"description\": \"Peter Parker seeks help...\",\n  \"duration\": 148,\n  \"genre\": \"Action\",\n  \"release_date\": \"2021-12-17\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost/API/index.php/api/movies",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "movies"]
+            }
+          }
+        },
+        {
+          "name": "Create Movie - Avengers: Endgame",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Avengers: Endgame\",\n  \"description\": \"After the devastating events of Avengers: Infinity War, the universe is in ruins...\",\n  \"duration\": 181,\n  \"genre\": \"Action\",\n  \"release_date\": \"2019-04-26\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost/API/index.php/api/movies",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "movies"]
+            }
+          }
+        },
+        {
+          "name": "Create Movie - The Dark Knight",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"The Dark Knight\",\n  \"description\": \"When the menace known as the Joker wreaks havoc...\",\n  \"duration\": 152,\n  \"genre\": \"Action\",\n  \"release_date\": \"2008-07-18\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost/API/index.php/api/movies",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "movies"]
+            }
+          }
+        },
+        {
+          "name": "Update Movie",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Spider-Man: No Way Home (Updated)\",\n  \"description\": \"Updated description\",\n  \"duration\": 150,\n  \"genre\": \"Action\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost/API/index.php/api/movies/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "movies", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Movie",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/movies/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "movies", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Showtimes",
+      "item": [
+        {
+          "name": "Get All Showtimes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/showtimes",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "showtimes"]
+            }
+          }
+        },
+        {
+          "name": "Get Showtimes by Movie",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/showtimes?movie_id=1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "showtimes"],
+              "query": [
+                {
+                  "key": "movie_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Showtime by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/showtimes/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "showtimes", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Showtime",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": 1,\n  \"show_date\": \"2024-01-20\",\n  \"show_time\": \"16:00:00\",\n  \"theater\": \"Cinema 2\",\n  \"price\": 45000.00\n}"
+            },
+            "url": {
+              "raw": "http://localhost/API/index.php/api/showtimes",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "showtimes"]
+            }
+          }
+        },
+        {
+          "name": "Update Showtime",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": 1,\n  \"show_date\": \"2024-01-20\",\n  \"show_time\": \"18:00:00\",\n  \"theater\": \"Cinema 2\",\n  \"price\": 50000.00\n}"
+            },
+            "url": {
+              "raw": "http://localhost/API/index.php/api/showtimes/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "showtimes", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Showtime",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/showtimes/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "showtimes", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Get All Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/bookings",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Get Bookings by User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/bookings?user_id=1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "bookings"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Booking by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/bookings/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "bookings", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1,\n  \"showtime_id\": 1,\n  \"seats_booked\": 2\n}"
+            },
+            "url": {
+              "raw": "http://localhost/API/index.php/api/bookings",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Update Booking",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1,\n  \"showtime_id\": 1,\n  \"seats_booked\": 3\n}"
+            },
+            "url": {
+              "raw": "http://localhost/API/index.php/api/bookings/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "bookings", "1"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/bookings/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "bookings", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/users/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"08123456789\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost/API/index.php/api/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"08123456789\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost/API/index.php/api/users/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/API/index.php/api/users/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "path": ["API", "index.php", "api", "users", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
