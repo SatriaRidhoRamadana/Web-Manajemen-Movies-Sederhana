@@ -1,32 +1,41 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+// Controller `Api` bertanggung jawab untuk endpoint API (movies, users).
+// Setiap method publik di controller ini dipetakan dari route `api/*`.
+// Controller ini memvalidasi JWT, memeriksa revocation, dan memastikan user adalah admin.
 class Api extends CI_Controller {
 
     public function __construct() {
+        // Panggil constructor parent
         parent::__construct();
+
+        // Load model dan library yang diperlukan
         $this->load->model('Movie_model');
-        
         $this->load->model('User_model');
         $this->load->library('form_validation');
+        // Semua response API dikembalikan sebagai JSON
         $this->output->set_content_type('application/json');
         $this->load->database();
 
-        // token check for API requests (Authorization: Bearer <token>)
-        // Try multiple sources because some servers (Apache/PHP) strip Authorization header
+        // Cek token untuk request API (format: Authorization: Bearer <token>)
+        // Beberapa server (terutama konfigurasi Apache) dapat menghapus header Authorization,
+        // sehingga kita mencoba beberapa sumber untuk menemukan token.
         $token = null;
 
-        // 1) Standard header via CI input
+        // 1) Ambil header Authorization standar via CI
         $auth_header = $this->input->get_request_header('Authorization', TRUE);
         if (!empty($auth_header)) {
             if (stripos($auth_header, 'Bearer ') === 0) {
+                // Jika berformat 'Bearer <token>' maka ambil token tanpa kata 'Bearer '
                 $token = substr($auth_header, 7);
             } else {
+                // Jika header berisi langsung token, gunakan apa adanya
                 $token = $auth_header;
             }
         }
 
-        // 2) Fallback to common server vars
+        // 2) Fallback ke variabel server umum (HTTP_AUTHORIZATION / REDIRECT_HTTP_AUTHORIZATION)
         if (empty($token) && !empty($_SERVER['HTTP_AUTHORIZATION'])) {
             $h = $_SERVER['HTTP_AUTHORIZATION'];
             if (stripos($h, 'Bearer ') === 0) $token = substr($h, 7); else $token = $h;
@@ -36,24 +45,24 @@ class Api extends CI_Controller {
             if (stripos($h, 'Bearer ') === 0) $token = substr($h, 7); else $token = $h;
         }
 
-        // 3) Alternative header used earlier for debugging
+        // 3) Header alternatif yang kadang digunakan untuk debugging
         if (empty($token)) {
             $x = $this->input->get_request_header('X-Auth-Token', TRUE);
             if (!empty($x)) $token = $x;
         }
 
-        // 4) Query parameter fallback (not recommended, but useful for quick tests)
+        // 4) Query parameter fallback (TIDAK direkomendasikan untuk production)
         if (empty($token)) {
             $q = $this->input->get('token', TRUE);
             if (!empty($q)) $token = $q;
         }
 
-        // Note: cookie fallback removed to require explicit Authorization header
+        // Catatan: cookie fallback sengaja dihapus; API memerlukan header Authorization eksplisit.
 
-        // normalize
+        // Normalisasi token ke string atau null
         $token = is_string($token) ? trim($token) : null;
 
-        // decode JWT (stateless) and load user by id
+        // Decode JWT stateless dan muat data user berdasarkan klaim sub
         $this->load->helper('jwt');
         $jwt_key = $this->config->item('jwt_key');
         $user = null;
@@ -64,16 +73,17 @@ class Api extends CI_Controller {
                 log_message('debug', 'Api jwt_decode returned null or invalid');
             }
             if ($payload && isset($payload['sub'])) {
-                // check revocation
+                // Periksa apakah token sudah dicabut (revoked)
                 $this->load->model('Token_model');
                 if (isset($payload['jti']) && $this->Token_model->is_revoked($payload['jti'])) {
                     log_message('debug', 'Api auth failed: token revoked jti=' . $payload['jti']);
                 } else {
+                    // Muat user dari DB
                     $user = $this->User_model->get_user((int)$payload['sub']);
-                    // require admin role for API access
+                    // Untuk API ini hanya admin yang diizinkan mengakses
                     if ($user && empty($user['is_admin'])) {
                         log_message('debug', 'Api auth failed: user not admin id=' . (int)$payload['sub']);
-                        $user = null; // treat as unauthorized for API
+                        $user = null; // perlakukan sebagai unauthorized
                     }
                 }
             }
@@ -88,7 +98,7 @@ class Api extends CI_Controller {
             exit;
         }
 
-        // optionally make current user available to methods
+        // Simpan user saat ini agar bisa diakses oleh method lain
         $this->current_user = $user;
     }
 

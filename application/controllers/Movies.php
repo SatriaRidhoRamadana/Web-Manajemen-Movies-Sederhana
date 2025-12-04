@@ -1,21 +1,27 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+// Controller `Movies` menyediakan UI web untuk manajemen film.
+// Akses ke controller ini hanya untuk user admin (menggunakan JWT atau session web).
 class Movies extends CI_Controller {
 
+    // Path tempat menyimpan poster yang diupload
     private $upload_path;
 
     public function __construct() {
+        // Panggil parent constructor
         parent::__construct();
+        // Muat model dan helper/library
         $this->load->model('Movie_model');
         $this->load->model('User_model');
         $this->load->helper(array('form', 'url'));
         $this->load->library(array('form_validation', 'session'));
 
-        // Token-based auth: accept Authorization: Bearer <token> or session user_id for web UI
+        // Autentikasi berbasis token untuk API atau session untuk UI web
         $this->load->helper('jwt');
         $jwt_key = $this->config->item('jwt_key');
 
+        // Coba ambil token dari header Authorization
         $auth_header = $this->input->get_request_header('Authorization', TRUE);
         $token = null;
         if (!empty($auth_header) && stripos($auth_header, 'Bearer ') === 0) {
@@ -24,45 +30,49 @@ class Movies extends CI_Controller {
 
         $user = null;
             if (!empty($token)) {
+                // Jika ada token, decode dan verifikasi
                 $payload = jwt_decode($token, $jwt_key);
                 if ($payload && isset($payload['sub'])) {
                     $this->load->model('Token_model');
                     if (isset($payload['jti']) && $this->Token_model->is_revoked($payload['jti'])) {
+                        // Token sudah dicabut
                         $user = null;
                     } else {
+                        // Muat user dari DB
                         $user = $this->User_model->get_user((int)$payload['sub']);
                     }
                 }
             }
 
-        // fallback to session (for web UI)
+        // Jika tidak ada token, coba fallback ke session untuk UI web
         if (!$user && $this->session->userdata('user_id')) {
             $user = $this->User_model->get_user((int)$this->session->userdata('user_id'));
         }
 
-        // Only admin may use Movies management
+        // Pastikan hanya admin yang dapat mengakses manajemen film
         if ($user && empty($user['is_admin'])) {
             $user = null;
         }
 
         if (!$user) {
             if (!empty($auth_header)) {
-                // API client provided Authorization header -> return JSON 401/403
+                // Jika client API mengirim header Authorization tapi tidak berizin -> kembalikan JSON 403
                 $this->output->set_content_type('application/json')->set_status_header(403)->set_output(json_encode([
                     'status' => false,
                     'error'  => 'Forbidden'
                 ]));
                 exit;
             } else {
-                // No header or not admin -> redirect to login for web UI
+                // Untuk request web, redirect ke halaman login
                 redirect('auth/login');
                 exit;
             }
         }
 
-        // store current user for controller use
+        // Simpan user sekarang untuk digunakan oleh method lain di controller
         $this->current_user = $user;
 
+        // Siapkan direktori upload poster
         $this->upload_path = FCPATH . 'uploads' . DIRECTORY_SEPARATOR . 'posters' . DIRECTORY_SEPARATOR;
         if (!is_dir($this->upload_path)) {
             mkdir($this->upload_path, 0775, true);

@@ -1,13 +1,14 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+// Model `Token_model` menyimpan daftar token (jti) yang dicabut (revoked).
 class Token_model extends CI_Model {
     public function __construct() {
         parent::__construct();
     }
 
+    // Pastikan tabel revoked_tokens ada; dibuat secara best-effort jika belum ada
     private function ensure_table() {
-        // Create table if not exists (best-effort)
         $sql = "CREATE TABLE IF NOT EXISTS `revoked_tokens` (
             `id` INT(11) NOT NULL AUTO_INCREMENT,
             `jti` VARCHAR(64) NOT NULL,
@@ -22,6 +23,7 @@ class Token_model extends CI_Model {
         }
     }
 
+    // Masukkan jti ke tabel revoked_tokens agar token dianggap tidak berlaku
     public function revoke_jti($jti, $expires_at = null) {
         if (empty($jti)) return false;
         $this->ensure_table();
@@ -33,13 +35,14 @@ class Token_model extends CI_Model {
         }
     }
 
+    // Periksa apakah jti sudah dicabut; jika expired, bersihkan record
     public function is_revoked($jti) {
         if (empty($jti)) return true;
         $this->ensure_table();
         $row = $this->db->get_where('revoked_tokens', array('jti' => $jti))->row_array();
         if (!$row) return false;
         if (!empty($row['expires_at']) && time() > (int)$row['expires_at']) {
-            // cleanup expired revocation
+            // Hapus revocation yang sudah lewat masa berlaku
             $this->db->delete('revoked_tokens', array('jti' => $jti));
             return false;
         }

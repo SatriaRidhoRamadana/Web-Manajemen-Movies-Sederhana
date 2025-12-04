@@ -1,12 +1,14 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+// Model `Showtime_model` menangani data jadwal tayang (`showtimes`).
 class Showtime_model extends CI_Model {
 
     public function __construct() {
         parent::__construct();
     }
 
+    // Ambil semua showtime beserta judul film terkait
     public function get_all_showtimes() {
         $this->db->select('showtimes.*, movies.title as movie_title');
         $this->db->from('showtimes');
@@ -16,6 +18,7 @@ class Showtime_model extends CI_Model {
     }
 
     public function get_showtimes_by_movie($movie_id) {
+        // Ambil jadwal tayang untuk film tertentu
         $this->db->select('showtimes.*, movies.title as movie_title');
         $this->db->from('showtimes');
         $this->db->join('movies', 'showtimes.movie_id = movies.id');
@@ -25,6 +28,7 @@ class Showtime_model extends CI_Model {
     }
 
     public function get_showtime($id) {
+        // Ambil detail showtime berdasarkan id
         $this->db->select('showtimes.*, movies.title as movie_title');
         $this->db->from('showtimes');
         $this->db->join('movies', 'showtimes.movie_id = movies.id');
@@ -34,19 +38,23 @@ class Showtime_model extends CI_Model {
     }
 
     public function insert_showtime($data) {
+        // Tambah showtime baru
         return $this->db->insert('showtimes', $data);
     }
 
     public function update_showtime($id, $data) {
+        // Update data showtime
         $this->db->where('id', $id);
         return $this->db->update('showtimes', $data);
     }
 
     public function delete_showtime($id) {
+        // Hapus showtime berdasarkan id
         return $this->db->delete('showtimes', array('id' => $id));
     }
 
     public function update_available_seats($id, $seats_booked) {
+        // Kurangi jumlah kursi tersedia secara atomik jika cukup tersedia
         $this->db->set('available_seats', 'available_seats - ' . (int)$seats_booked, FALSE);
         $this->db->where('id', $id);
         $this->db->where('available_seats >=', $seats_booked);
